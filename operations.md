@@ -1,6 +1,6 @@
 # **Operations (12 Total)**
 
-This system supports three user roles**:**
+This system supports three user roles:
 
 **1.** **Member,**
 
