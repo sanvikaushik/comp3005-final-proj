@@ -1,13 +1,19 @@
-DROP TABLE IF EXISTS Payment           CASCADE;
-DROP TABLE IF EXISTS PrivateSession    CASCADE;
-DROP TABLE IF EXISTS ClassRegistration CASCADE;
-DROP TABLE IF EXISTS ClassSchedule     CASCADE;
-DROP TABLE IF EXISTS HealthMetric      CASCADE;
-DROP TABLE IF EXISTS Equipment         CASCADE;
-DROP TABLE IF EXISTS Room              CASCADE;
-DROP TABLE IF EXISTS AdministrativeStaff CASCADE;
-DROP TABLE IF EXISTS Trainer           CASCADE;
-DROP TABLE IF EXISTS Member            CASCADE;
+DROP TABLE IF EXISTS EquipmentMaintenance   CASCADE;
+DROP TABLE IF EXISTS TrainerAvailability    CASCADE;
+DROP TABLE IF EXISTS Payment                CASCADE;
+DROP TABLE IF EXISTS PrivateSession         CASCADE;
+DROP TABLE IF EXISTS ClassRegistration      CASCADE;
+DROP TABLE IF EXISTS ClassSchedule          CASCADE;
+DROP TABLE IF EXISTS HealthMetric           CASCADE;
+DROP TABLE IF EXISTS Equipment              CASCADE;
+DROP TABLE IF EXISTS Room                   CASCADE;
+DROP TABLE IF EXISTS AdministrativeStaff    CASCADE;
+DROP TABLE IF EXISTS Trainer                CASCADE;
+DROP TABLE IF EXISTS Member                 CASCADE;
+
+--====================
+-- CORE ENTITIES
+--====================
 
 ----------
 -- MEMBER
@@ -62,7 +68,7 @@ CREATE TABLE Equipment (
     EquipmentID      SERIAL PRIMARY KEY,
     RoomID           INT REFERENCES Room(RoomID),
     Name             VARCHAR(255) NOT NULL,
-    Status           VARCHAR(50) NOT NULL,   -- e.g. 'OK', 'UnderMaintenance'
+    Status           VARCHAR(50) NOT NULL,   
     LastServicedDate DATE
 );
 
@@ -89,13 +95,13 @@ CREATE TABLE ClassSchedule (
     RoomID       INT NOT NULL REFERENCES Room(RoomID),
     DayOfWeek    VARCHAR(20) NOT NULL,
     StartTime    TIME NOT NULL,
-    Duration     INT NOT NULL,      
-    MaxCapacity  INT                
+    Duration     INT NOT NULL,    
+    MaxCapacity  INT
 );
 
 ---------------------------------------
 -- CLASS REGISTRATION (MEMBER ↔ CLASS)
-----------------------------------------
+---------------------------------------
 CREATE TABLE ClassRegistration (
     RegistrationID   SERIAL PRIMARY KEY,
     MemberID         INT NOT NULL REFERENCES Member(MemberID) ON DELETE CASCADE,
@@ -119,13 +125,38 @@ CREATE TABLE PrivateSession (
 
 --------------------------------
 -- PAYMENT (FOR BILLING / FEES)
----------------------------------
+--------------------------------
 CREATE TABLE Payment (
     PaymentID   SERIAL PRIMARY KEY,
     MemberID    INT NOT NULL REFERENCES Member(MemberID) ON DELETE CASCADE,
     StaffID     INT REFERENCES AdministrativeStaff(StaffID),
     Amount      NUMERIC(10,2) NOT NULL,
     PaymentDate DATE NOT NULL DEFAULT CURRENT_DATE,
-    PaymentType VARCHAR(50),    
+    PaymentType VARCHAR(50),         
     Notes       TEXT
+);
+
+---------------------------------
+-- TRAINER AVAILABILITY (SLOTS)
+---------------------------------
+CREATE TABLE TrainerAvailability (
+    AvailabilityID SERIAL PRIMARY KEY,
+    TrainerID      INT NOT NULL REFERENCES Trainer(TrainerID) ON DELETE CASCADE,
+    DayOfWeek      VARCHAR(20) NOT NULL, 
+    StartTime      TIME NOT NULL,
+    EndTime        TIME NOT NULL,
+    IsRecurring    BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+------------------------------------------
+-- EQUIPMENT MAINTENANCE (ISSUE TRACKING)
+------------------------------------------
+CREATE TABLE EquipmentMaintenance (
+    MaintenanceID SERIAL PRIMARY KEY,
+    EquipmentID   INT NOT NULL REFERENCES Equipment(EquipmentID) ON DELETE CASCADE,
+    StaffID       INT REFERENCES AdministrativeStaff(StaffID),
+    ReportedAt    TIMESTAMP NOT NULL DEFAULT NOW(),
+    Description   TEXT NOT NULL,
+    Status        VARCHAR(50) NOT NULL,  
+    ResolvedAt    TIMESTAMP
 );
